@@ -1,6 +1,8 @@
 var express = require("express");
 var logger = require("morgan");
 var mongoose = require("mongoose");
+var request = require("request");
+var bodyParser = require("body-parser");
 
 // Our scraping tools
 // Axios is a promised-based http library, similar to jQuery's Ajax method
@@ -26,28 +28,34 @@ app.use(express.json());
 // Make public a static folder
 app.use(express.static("public"));
 
+// app.engine(
+//   "handlebars",
+//   exphbs({
+//     defaultLayout: "main"
+//   })
+// );
+// app.set("view engine", "handlebars");
+
+
 // Connect to the Mongo DB
 mongoose.connect("mongodb://localhost/unit18Populater", { useNewUrlParser: true });
+var results = [];
 
 // Routes
 
+app.get("/", function(req, res) {
+  res.render("index");
+});
+
 // A GET route for scraping the echoJS website
 app.get("/scrape", function(req, res) {
-  var found;
-  var titleArr = [];
-    // db.Article.find({})
-    //   .then(function(dbArticle) {
-    //     for (var j=0; j<dbArticle.length;j++) {
-    //       titleArr.push(dbArticle[j].title)
-    //     }
-    //     console.log(titleArr);
   // First, we grab the body of the html with axios
-  axios.get("https://www.reddit.com/r/news/").then(function(response) {
+  axios.get("https://techcrunch.com/").then(function(response) {
     // Then, we load that into cheerio and save it to $ for a shorthand selector
     var $ = cheerio.load(response.data);
 
     // Now, we grab every h2 within an article tag, and do the following:
-    $("article h2").each(function(i, element) {
+    $("body h2").each(function(i, element) {
       // Save an empty result object
       var result = {};
 
@@ -55,7 +63,6 @@ app.get("/scrape", function(req, res) {
       result.title = $(this)
         .children("a")
         .text();
-        found = titleArr.includes(result.title);
       result.link = $(this)
         .children("a")
         .attr("href");
@@ -73,9 +80,7 @@ app.get("/scrape", function(req, res) {
     });
 
     // Send a message to the client
-    res.send("Scrape Complete", {
-      articles: results
-    });
+    res.send("Scrape Complete");
   });
 });
 
